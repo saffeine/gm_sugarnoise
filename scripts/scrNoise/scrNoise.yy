@@ -1,0 +1,13 @@
+{
+  "$GMScript":"",
+  "%Name":"scrNoise",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"scrNoise",
+  "parent":{
+    "name":"sugar_noise",
+    "path":"sugar_noise.yyp",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

@@ -1,0 +1,8 @@
+{
+  "FolderOrderSettings":[],
+  "ResourceOrderSettings":[
+    {"name":"fntTiny","order":3,"path":"fonts/fntTiny/fntTiny.yy",},
+    {"name":"objNoise","order":1,"path":"objects/objNoise/objNoise.yy",},
+    {"name":"scrNoise","order":2,"path":"scripts/scrNoise/scrNoise.yy",},
+  ],
+}
