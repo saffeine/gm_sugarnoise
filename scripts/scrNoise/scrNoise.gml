@@ -1,114 +1,50 @@
-window_set_size(280 * 3, 280 * 3);
 function SugarNoise(_width, _height) constructor {
+	/*	define variables. */
 	width		= _width;
 	height		= _height;
 	noiseMap	= [];
 	
-	generateMap	= function(){
-		for(var i=0; i<width*height; i++){
-			noiseMap[i]		= {
-				value:	1,
-				angle:	(random(360))
-			};
-		}
+	/*	fade/ease function, for smoother edges weighted towards 0 & 1. */
+	__fade		= function(_t){
+		return 1-((dcos(_t*180)+1) / 2);
 	};
 	
+	/*	populate the noiseMap array with random angle values (in degrees). */
+	generateMap	= function(){
+		for(var i=0; i<width*height; i++){
+			noiseMap[i]	= random(360);
+		} return;
+	};
+	
+	/*	return the value at a given location. */
 	get			= function(_x, _y){
-		var _ix		= floor(_x);	// integer x.
-		var _iy		= floor(_y);	// integer y.
-		var _lx		= _x - _ix;		// lerp x.
-		var _ly		= _y - _iy;		// lerp y.
+		var _ix		= floor(_x);	// integer x, the floor value of the _x coord.
+		var _iy		= floor(_y);	// integer y, the floor value of the _y coord.
+		var _lx		= __fade(_x - _ix);		// lerp x, the remainder value of the _x coord, put through the fade function.
+		var _ly		= __fade(_y - _iy);		// lerp y, the remainder value of the _y coord, put through the fade function.
 		
-		var _aa		= getStruct(_ix, _iy);
-		var _ba		= getStruct(_ix + 1, _iy);
-		var _ab		= getStruct(_ix, _iy + 1);
-		var _bb		= getStruct(_ix + 1, _iy + 1);
+		var _aa		= getAngle(_ix, _iy);			//	return the angles of all four corner points of the "cell".
+		var _ba		= getAngle(_ix + 1, _iy);		//	the letters A/B refer to the X/Y positions respectively.
+		var _ab		= getAngle(_ix, _iy + 1);		//	AA	|	BA
+		var _bb		= getAngle(_ix + 1, _iy + 1);	//	AB	|	BB
 		
-		var _aw		= lerp(dcos(_aa.angle), dcos(_ba.angle), _lx);
-		var _ah		= lerp(dsin(_aa.angle), dsin(_ba.angle), _lx);
-		var _bw		= lerp(dcos(_ab.angle), dcos(_bb.angle), _lx);
-		var _bh		= lerp(dsin(_ab.angle), dsin(_bb.angle), _lx);
-		var _cw		= (1 + lerp(_aw, _bw, fade(_ly))) / 2;
-		var _ch		= (1 + lerp(_ah, _bh, fade(_ly))) / 2;
-		var _result	= ((_cw + _ch)) / 2;
+		var _aw		= lerp(dcos(_aa), dcos(_ba), _lx);	//	interpolate the top-left/top-right cosine values.
+		var _ah		= lerp(dsin(_aa), dsin(_ba), _lx);	//	interpolate the top-left/top-right sine values.
+		var _bw		= lerp(dcos(_ab), dcos(_bb), _lx);	//	interpolate the bottom-left/bottom-right cosine values.
+		var _bh		= lerp(dsin(_ab), dsin(_bb), _lx);	//	interpolate the bottom-left/bottom-right sine values.
+		var _cw		= (1 + lerp(_aw, _bw, _ly)) / 2;	//	interpolate the cosine values, add one & divide by 2 to give a value between 0-1.
+		var _ch		= (1 + lerp(_ah, _bh, _ly)) / 2;	//	interpolate the sine values, add one & divide by 2 to give a value between 0-1.
+		var _result	= ((_cw + _ch)) / 2;				//	finally, return the sum of the cosine and sine values, divided by two to give a value between 0-1.
 		
 		return _result;
 	};
 	
-	getStruct	= function(_x, _y){
-		_x		= (_x % width);
-		_y		= (_y % height);
-		return noiseMap[(_y * width) + _x];
-	};
-	
-	drawNoise	= function(_x, _y){
-		var _spanX		= 16;
-		var _spanY		= 16;
-		
-		for(var i=0; i<width; i+=(1/_spanX)){
-		for(var j=0; j<height; j+=(1/_spanY)){
-			var _xx		= _x + (i*_spanX);
-			var _yy		= _y + (j*_spanY);
-			var _level	= (get(i, j)) * 255;
-			draw_set_color(make_color_rgb(_level, _level, _level));
-			draw_point(_xx, _yy);
-		};
-		};
-	};
-	
-	drawAngles	= function(_x, _y){
-		for(var i=0; i<width*height; i++){
-			var _ix		= floor(i % width);
-			var _iy		= floor(i / width);
-			var _ax		= (_ix * 16);
-			var _ay		= (_iy * 16);
-			var _bx		= (_ax + (dcos(noiseMap[i].angle) * (noiseMap[i].value * 16)));
-			var _by		= (_ay + (dsin(noiseMap[i].angle) * (noiseMap[i].value * 16)));
-			
-			draw_set_color(c_red);
-			draw_line(_x + _ax, _y + _ay, _x + _bx, _y + _by);
-		} return;
+	/*	return the angle at a given cell position. */
+	getAngle	= function(_x, _y){
+		_x		= (_x % width);		//	perform modulo on the _x value in order to wrap it around the width.
+		_y		= (_y % height);	//	perform modulo on the _y value in order to wrap it around the height.
+		return noiseMap[(_y * width) + _x];		// return the angle value at that point within the noiseMap.
 	};
 	
 	generateMap();
-}
-
-function Vec2(_x, _y) constructor {
-	x	= _x;
-	y	= _y;
-}
-
-function fade(_t){
-	return 1-((dcos(_t*180)+1) / 2);
-}
-
-function main(){
-	static __ = undefined;
-	if(__ == undefined){
-		noise = (new SugarNoise(16, 16));
-		noise1 = (new SugarNoise(32, 32));
-		noise2 = (new SugarNoise(64, 64));
-		__	= true; return;
-	}
-	
-	var _scale	= 32;
-	for(var i=0; i<8; i+=(1/_scale)){
-	for(var j=0; j<8; j+=(1/_scale)){
-		var _mx = (mouse_x - 4);
-		var _my = (mouse_y - 4);
-		
-		var _level	= ((noise.get(i, j) + noise1.get(i*2.153, j*2.1782) + noise2.get(i*2.653, j*2.6782)) / 3) * 10;
-		
-		var _colour = c_navy;
-		if(_level > 2){ _colour = c_blue; }
-		if(_level > 4){ _colour = c_teal; }
-		if(_level > 4.33){ _colour = c_green; }
-		if(_level > 4.66){ _colour = c_lime; }
-		if(_level > 8){ _colour = c_silver; }
-		if(_level > 9){ _colour = c_white; }
-		
-		draw_set_color(_colour);
-		draw_point(4 + (i*_scale), 4 + (j*_scale));
-	}
-	}
 }
